@@ -235,6 +235,27 @@
     textarea { min-height: 128px; resize: vertical; }
     input:focus, textarea:focus { border-color: var(--stone-900); box-shadow: 0 0 0 3px rgba(28,25,23,.10); }
 
+    .form-status {
+      display: none;
+      border-radius: 16px;
+      padding: 14px 15px;
+      font-size: 14px;
+      line-height: 1.5;
+      font-weight: 650;
+    }
+    .form-status.success {
+      display: block;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+    }
+    .form-status.error {
+      display: block;
+      background: #fff7ed;
+      border: 1px solid #fed7aa;
+      color: #9a3412;
+    }
+
     .footer { border-top: 1px solid var(--stone-200); background: var(--stone-50); padding: 30px 0; color: var(--stone-600); font-size: 14px; }
     .footer-wrap { display: flex; justify-content: space-between; gap: 22px; flex-wrap: wrap; }
     .footer-links { display: flex; gap: 20px; font-weight: 650; }
@@ -450,12 +471,16 @@
             <div class="contact-card">
               <h3>Request a bid</h3>
               <p>This form is ready for layout and can be connected to a form provider later. For now, calls and email are the best path.</p>
-              <form action="mailto:austin@cpconstructionnwa.com" method="post" enctype="text/plain">
-                <input type="text" name="name" placeholder="Name" aria-label="Name" />
-                <input type="email" name="email" placeholder="Email" aria-label="Email" />
-                <input type="tel" name="phone" placeholder="Phone" aria-label="Phone" />
-                <textarea name="message" placeholder="Tell us about your project" aria-label="Project message"></textarea>
-                <button class="button button-dark" type="submit">Submit Request</button>
+              <form id="bidForm" action="https://formsubmit.co/ajax/austin@cpconstructionnwa.com" method="POST">
+                <input type="hidden" name="_subject" value="New Bid Request from CP Construction NWA Website" />
+                <input type="hidden" name="_template" value="table" />
+                <input type="hidden" name="_captcha" value="false" />
+                <input type="text" name="name" placeholder="Name" aria-label="Name" required />
+                <input type="email" name="email" placeholder="Email" aria-label="Email" required />
+                <input type="tel" name="phone" placeholder="Phone" aria-label="Phone" required />
+                <textarea name="message" placeholder="Tell us about your project" aria-label="Project message" required></textarea>
+                <div id="formStatus" class="form-status" role="status" aria-live="polite"></div>
+                <button id="submitButton" class="button button-dark" type="submit">Submit Request</button>
               </form>
             </div>
           </div>
@@ -477,6 +502,45 @@
 
   <script>
     document.getElementById("year").textContent = new Date().getFullYear();
+
+    const bidForm = document.getElementById("bidForm");
+    const formStatus = document.getElementById("formStatus");
+    const submitButton = document.getElementById("submitButton");
+
+    bidForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      formStatus.className = "form-status";
+      formStatus.textContent = "";
+      submitButton.disabled = true;
+      submitButton.textContent = "Sending...";
+
+      try {
+        const formData = new FormData(bidForm);
+
+        const response = await fetch(bidForm.action, {
+          method: "POST",
+          body: formData,
+          headers: {
+            "Accept": "application/json"
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error("Submission failed");
+        }
+
+        bidForm.reset();
+        formStatus.className = "form-status success";
+        formStatus.textContent = "Thank you. Your bid request has been sent. CP Construction NWA will follow up with you shortly.";
+        submitButton.textContent = "Request Sent";
+      } catch (error) {
+        formStatus.className = "form-status error";
+        formStatus.textContent = "Something went wrong. Please call 479-202-2117 or email austin@cpconstructionnwa.com directly.";
+        submitButton.textContent = "Submit Request";
+        submitButton.disabled = false;
+      }
+    });
   </script>
 </body>
 </html>
